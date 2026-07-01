@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#f5f5f7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Settings">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='Icon.svg') }}">
+    <link rel="icon" href="{{ url_for('static', filename='Icon.svg') }}" type="image/svg+xml">
+    <title>Settings — Gallery</title>
+
+    <script>
+    (function() {
+        try {
+            const saved = localStorage.getItem('gallery-theme') || 'auto';
+            document.documentElement.setAttribute('data-theme', saved);
+        } catch (e) { document.documentElement.setAttribute('data-theme', 'auto'); }
+    })();
+    </script>
+
+    <style>
+    :root {
+        --bg:            #f2f2f7;
+        --surface:       #ffffff;
+        --surface-2:     #f9f9fb;
+        --border:        rgba(0, 0, 0, 0.08);
+        --border-strong: rgba(0, 0, 0, 0.14);
+        --text:          #1c1c1e;
+        --text-2:        #6e6e73;
+        --text-3:        #8e8e93;
+        --accent:        #007aff;
+        --accent-hover:  #0062cc;
+        --danger:        #ff3b30;
+        --danger-hover:  #d70015;
+        --success:       #34c759;
+        --warning:       #ff9500;
+        --radius-sm: 10px;
+        --radius-md: 14px;
+        --radius-lg: 20px;
+        --radius-xl: 28px;
+        --shadow-sm: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.06);
+        --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+        --shadow-lg: 0 12px 32px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06);
+        --header-h: 64px;
+        --safe-top: env(safe-area-inset-top, 0px);
+        --safe-bot: env(safe-area-inset-bottom, 0px);
+    }
+    html[data-theme="dark"] {
+        --bg: #000000; --surface: #1c1c1e; --surface-2: #2c2c2e;
+        --border: rgba(255,255,255,0.10); --border-strong: rgba(255,255,255,0.18);
+        --text: #ffffff; --text-2: #ebebf599; --text-3: #ebebf580;
+    }
+    @media (prefers-color-scheme: dark) {
+        html[data-theme="auto"] {
+            --bg: #000000; --surface: #1c1c1e; --surface-2: #2c2c2e;
+            --border: rgba(255,255,255,0.10); --border-strong: rgba(255,255,255,0.18);
+            --text: #ffffff; --text-2: #ebebf599; --text-3: #ebebf580;
+        }
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+        margin: 0; padding: 0;
+        -webkit-tap-highlight-color: transparent;
+    }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        font-size: 16px;
+        line-height: 1.4;
+        min-height: 100vh;
+    }
+    button, input, select { font-family: inherit; }
+    a { color: inherit; text-decoration: none; }
+
+    /* ---------- TOPBAR ---------- */
+    .topbar {
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        height: calc(var(--header-h) + var(--safe-top));
+        padding: var(--safe-top) 12px 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: color-mix(in srgb, var(--surface) 75%, transparent);
+        backdrop-filter: saturate(180%) blur(24px);
+        -webkit-backdrop-filter: saturate(180%) blur(24px);
+        border-bottom: 1px solid var(--border);
+        z-index: 100;
+    }
+    .topbar__title {
+        flex: 1;
+        font-size: 17px;
+        font-weight: 600;
+    }
+    .icon-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px; height: 40px;
+        background: var(--surface-2);
+        border: none;
+        border-radius: 999px;
+        color: var(--text);
+        cursor: pointer;
+        transition: background 0.2s ease;
+    }
+    .icon-btn:hover { background: var(--border); }
+    .icon-btn:active { transform: scale(0.95); }
+    .icon-btn svg { width: 20px; height: 20px; }
+
+    /* ---------- LAYOUT ---------- */
+    main {
+        max-width: 640px;
+        margin: 0 auto;
+        padding: calc(var(--header-h) + var(--safe-top) + 16px) 16px calc(var(--safe-bot) + 32px);
+    }
+
+    .flash {
+        margin-bottom: 16px;
+        padding: 12px 14px;
+        background: color-mix(in srgb, var(--success) 12%, transparent);
+        border: 1px solid color-mix(in srgb, var(--success) 35%, transparent);
+        color: var(--success);
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: var(--radius-md);
+        animation: slideDown 0.3s ease;
+    }
+    .flash.is-error {
+        background: color-mix(in srgb, var(--danger) 10%, transparent);
+        border-color: color-mix(in srgb, var(--danger) 30%, transparent);
+        color: var(--danger);
+    }
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-8px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ---------- AVATAR CARD ---------- */
+    .avatar-card {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 20px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 16px;
+    }
+    .avatar {
+        position: relative;
+        width: 88px; height: 88px;
+        border-radius: 50%;
+        overflow: hidden;
+        flex-shrink: 0;
+        background: var(--surface-2);
+        border: 2px solid var(--border);
+    }
+    .avatar img {
+        width: 100%; height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    .avatar-fallback {
+        width: 100%; height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--accent), #5856d6);
+        color: white;
+        font-size: 36px;
+        font-weight: 700;
+    }
+    .avatar-info {
+        flex: 1;
+        min-width: 0;
+    }
+    .avatar-info h2 {
+        margin: 0 0 4px;
+        font-size: 18px;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .avatar-info p {
+        margin: 0 0 12px;
+        font-size: 14px;
+        color: var(--text-2);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .avatar-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    /* ---------- SECTION ---------- */
+    .section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-xl);
+        padding: 20px;
+        margin-bottom: 16px;
+        box-shadow: var(--shadow-sm);
+    }
+    .section h3 {
+        margin: 0 0 4px;
+        font-size: 17px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .section h3 svg { width: 20px; height: 20px; color: var(--text-2); }
+    .section__hint {
+        margin: 0 0 16px;
+        font-size: 13px;
+        color: var(--text-2);
+    }
+
+    /* ---------- FORMS ---------- */
+    .form {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+    .input-group { position: relative; }
+    .input-group input {
+        width: 100%;
+        height: 52px;
+        padding: 0 14px;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        font-size: 16px;
+        color: var(--text);
+        outline: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+    .input-group input::placeholder { color: transparent; }
+    .input-group input:focus {
+        border-color: var(--accent);
+        background: var(--surface);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+    }
+    .input-group label {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        padding: 0 4px;
+        font-size: 15px;
+        color: var(--text-3);
+        pointer-events: none;
+        transition: top 0.2s ease, font-size 0.2s ease, color 0.2s ease, background 0.2s ease;
+    }
+    .input-group input:focus + label,
+    .input-group input:not(:placeholder-shown) + label {
+        top: 0;
+        font-size: 12px;
+        color: var(--accent);
+        background: var(--surface);
+        font-weight: 600;    border-radius: var(--radius-sm);
+    }
+    .toggle-pass {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        padding: 6px 10px;
+        background: transparent;
+        border: none;
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        border-radius: 6px;
+    }
+    .toggle-pass:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+    .form-static {
+        padding: 14px;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        font-size: 14px;
+        color: var(--text-2);
+    }
+    .form-static strong {
+        display: block;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-3);
+        margin-bottom: 4px;
+    }
+
+    /* ---------- BUTTONS ---------- */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 0 18px;
+        height: 35px;
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: var(--radius-sm);
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.1s ease, background 0.2s ease;
+        text-decoration: none;
+    }
+    .btn:hover { background: var(--accent-hover); }
+    .btn:active { transform: scale(0.97); }
+    .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .btn--ghost {
+        background: var(--surface-2);
+        color: var(--text);
+        border: 1px solid var(--border);
+    }
+    .btn--ghost:hover { background: color-mix(in srgb, var(--text) 8%, var(--surface-2)); }
+    .btn--danger {
+        background: color-mix(in srgb, var(--danger) 10%, transparent);
+        color: var(--danger);
+        border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
+    }
+    .btn--danger:hover { background: color-mix(in srgb, var(--danger) 18%, transparent); }
+    .btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+    }   /* ---------- THEME PICKER ---------- */
+    .theme-picker {
+        display: flex;
+        gap: 4px;
+        padding: 4px;
+        background: var(--surface-2);
+        border-radius: var(--radius-md);
+        margin-bottom: 20px;
+    }
+    .theme-picker__btn {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        padding: 10px 4px;
+        background: transparent;
+        border: none;
+        border-radius: var(--radius-sm);
+        color: var(--text-2);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s ease, color 0.2s ease;
+        -webkit-tap-highlight-color: transparent;
+    }
+    .theme-picker__btn svg { width: 18px; height: 18px; }
+    .theme-picker__btn:hover { color: var(--text); }
+    .theme-picker__btn.is-active {
+        background: var(--surface);
+        color: var(--text);
+        box-shadow: var(--shadow-sm);
+    }
+    </style>
+</head>
+<body>
+
+<header class="topbar">
+    <a href="{{ url_for('index') }}" class="icon-btn" aria-label="Back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+    </a>
+    <div class="topbar__title">Settings</div>
+</header>
+
+<main>
+
+    {% with messages = get_flashed_messages() %}
+        {% for msg in messages %}
+            <div class="flash {% if 'incorrect' in msg.lower() or 'must' in msg.lower() or 'don\'t' in msg.lower() or 'invalid' in msg.lower() or 'taken' in msg.lower() or 'already' in msg.lower() or 'could not' in msg.lower() %}is-error{% endif %}">
+                {{ msg }}
+            </div>
+        {% endfor %}
+    {% endwith %}
+
+    <!-- Avatar -->
+    <section class="avatar-card">
+        <div class="avatar">
+            {% if avatar and avatar != 'static/default.svg' %}
+                <img src="{{ url_for('static', filename=username + '/' + avatar) }}?v={{ range(100000) | random }}" alt="Profile picture">
+            {% else %}
+                <div class="avatar-fallback">{{ display_name[0]|upper }}</div>
+            {% endif %}
+        </div>
+        <div class="avatar-info">
+            <h2>{{ display_name }}</h2>
+            <p>@{{ username }} · {{ email }}</p>
+            <div class="avatar-actions">
+                <form method="POST" action="{{ url_for('update_avatar') }}" enctype="multipart/form-data" style="display:inline;">
+                    <label for="avatarInput" class="btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                        </svg>
+                        Change photo
+                    </label>
+                    <input id="avatarInput" type="file" name="avatar" accept="image/png,image/jpeg,image/webp,image/gif" hidden onchange="this.form.submit()">
+                </form>
+                {% if avatar and avatar != 'default.svg' %}
+                <form method="POST" action="{{ url_for('remove_avatar') }}" style="display:inline;"
+                      onsubmit="return confirm('Remove your profile picture?');">
+                    <button type="submit" class="btn btn--danger">Remove</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+
+<!-- Plan & storage -->
+<section class="section">
+    <h3>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+        </svg>
+        Plan &amp; storage
+    </h3>
+    <p class="section__hint">
+        You're on the <strong>{{ plan.label }}</strong> plan.
+        {% if limit_bytes == 0 %}Unlimited storage.{% else %}{{ used_human }} of {{ limit_human }} used.{% endif %}
+    </p>
+
+    {% if limit_bytes > 0 %}
+    <div style="height: 8px; background: var(--border); border-radius: 999px; overflow: hidden; margin-bottom: 16px;">
+        <div style="
+            height: 100%;
+            width: {{ percent_used }}%;
+            background: linear-gradient(90deg,
+                {% if percent_used >= 90 %}var(--danger), var(--warning)
+                {% elif percent_used >= 75 %}var(--warning), var(--accent)
+                {% else %}var(--success), var(--accent){% endif %});
+            border-radius: 999px;
+            transition: width 0.3s ease;"></div>
+    </div>
+    {% endif %}
+
+    <!-- (Optional) plan picker — for development/testing.
+         Remove or protect /admin/set_plan in production. -->
+    <a href="{{ url_for('billing') }}" class="btn" style="display: flex;background: var(--success);">
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="6" width="18" height="13" rx="2"/>
+        <path d="M3 10h18"/>
+    </svg>
+    {% if subscription_id %}Manage subscription{% else %}Upgrade plan{% endif %}
+</a>
+</section>
+
+
+    <!-- Profile info -->
+    <section class="section">
+        <h3>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+            Profile
+        </h3>
+        <p class="section__hint">Update your display name and email address.</p>
+
+
+    <div class="theme-picker" role="radiogroup" aria-label="Theme">
+        <button type="button" class="theme-picker__btn" data-theme-value="auto" aria-label="Automatic theme">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/></svg>
+            <span>Auto</span>
+        </button>
+        <button type="button" class="theme-picker__btn" data-theme-value="light" aria-label="Light theme">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+            <span>Light</span>
+        </button>
+        <button type="button" class="theme-picker__btn" data-theme-value="dark" aria-label="Dark theme">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            <span>Dark</span>
+        </button>
+    </div>
+        <form method="POST" action="{{ url_for('update_profile') }}" class="form">
+            <div class="input-group">
+                <input type="text" id="display_name" name="display_name" required placeholder=" "
+                       maxlength="50" value="{{ display_name }}">
+                <label for="display_name">Display name</label>
+            </div>
+
+            <div class="input-group">
+                <input type="email" id="email" name="email" required placeholder=" "
+                       value="{{ email }}">
+                <label for="email">Email</label>
+            </div>
+
+            <div class="form-static">
+                <strong>Username</strong>
+                @{{ username }} <span style="color: var(--text-3); font-size: 12px;">(can't be changed)</span>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn">Save changes</button>
+            </div>
+        </form>
+    </section>
+
+    <!-- Password -->
+    <section class="section">
+        <h3>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            Password
+        </h3>
+        <p class="section__hint">Use at least 8 characters. Choose a password you don't use anywhere else.</p>
+
+        <form method="POST" action="{{ url_for('update_password') }}" class="form" id="pwForm">
+            <div class="input-group">
+                <input type="password" id="current_password" name="current_password" required placeholder=" " autocomplete="current-password">
+                <label for="current_password">Current password</label>
+                <button type="button" class="toggle-pass" data-target="current_password">Show</button>
+            </div>
+ 
+            <div class="input-group">
+                <input type="password" id="new_password" name="new_password" required placeholder=" " minlength="8" autocomplete="new-password">
+                <label for="new_password">New password</label>
+                <button type="button" class="toggle-pass" data-target="new_password">Show</button>
+            </div>
+
+            <div class="input-group">
+                <input type="password" id="confirm_password" name="confirm_password" required placeholder=" " minlength="8" autocomplete="new-password">
+                <label for="confirm_password">Confirm new password</label>
+                <button type="button" class="toggle-pass" data-target="confirm_password">Show</button>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn">Change password</button>
+            </div>
+        </form>
+    </section>
+
+</main>
+
+<script>
+    // Show / hide password
+    document.querySelectorAll('.toggle-pass').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const t = document.getElementById(btn.dataset.target);
+            const isHidden = t.type === 'password';
+            t.type = isHidden ? 'text' : 'password';
+            btn.innerText = isHidden ? 'Hide' : 'Show';
+        });
+    });
+
+    // Confirm password match
+    const newPw = document.getElementById('new_password');
+    const conf = document.getElementById('confirm_password');
+    document.getElementById('pwForm').addEventListener('submit', e => {
+        if (newPw.value !== conf.value) {
+            e.preventDefault();
+            alert("New passwords don't match");
+            conf.focus();
+        }
+    });
+
+    // Auto-hide flash after 3s
+    setTimeout(() => {
+        document.querySelectorAll('.flash').forEach(f => {
+            f.style.transition = 'opacity 0.4s ease';
+            f.style.opacity = '0';
+            setTimeout(() => f.remove(), 400);
+        });
+    }, 3000);
+
+
+
+/* ---------- THEME PICKER ---------- */
+function applyTheme(value) {
+    document.documentElement.setAttribute('data-theme', value);
+    try { localStorage.setItem('gallery-theme', value); } catch (e) {}
+    document.querySelectorAll('.theme-picker__btn').forEach(btn => {
+        btn.classList.toggle('is-active', btn.dataset.themeValue === value);
+    });
+}
+(function initTheme() {
+    let saved = 'auto';
+    try { saved = localStorage.getItem('gallery-theme') || 'auto'; } catch (e) {}
+    applyTheme(saved);
+    document.querySelectorAll('.theme-picker__btn').forEach(btn => {
+        btn.addEventListener('click', () => applyTheme(btn.dataset.themeValue));
+    });
+})();
+
+</script>
+
+</body>
+</html>
